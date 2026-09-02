@@ -1,2 +1,11 @@
 /venv
 API.md
+
+# Environment variables
+.env
+
+# Python cache & local db
+__pycache__/
+*.pyc
+db.sqlite3
+.DS_Store
