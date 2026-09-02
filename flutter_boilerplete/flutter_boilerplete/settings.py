@@ -30,7 +30,10 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+# Vercel sets VERCEL=1 in every deployment, so debug defaults off there even if
+# the env var was never configured. Locally it stays on.
+ON_VERCEL = bool(os.environ.get('VERCEL'))
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False' if ON_VERCEL else 'True') == 'True'
 
 # Vercel serves every deployment under *.vercel.app; add custom domains here too.
 ALLOWED_HOSTS = ['.vercel.app', '.now.sh', 'localhost', '127.0.0.1']
@@ -93,11 +96,16 @@ WSGI_APPLICATION = 'flutter_boilerplete.wsgi.application'
 
 # Set DATABASE_URL (Postgres) in the deployment environment. Vercel's filesystem
 # is read-only, so SQLite works locally but cannot accept writes once deployed.
+#
+# conn_max_age is 0 on serverless: every invocation may be a fresh instance, and
+# holding connections open exhausts the server's connection limit. Point
+# DATABASE_URL at your provider's *pooled* endpoint instead.
 DATABASES = {
     'default': dj_database_url.config(
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600,
+        conn_max_age=0 if ON_VERCEL else 600,
         conn_health_checks=True,
+        ssl_require=ON_VERCEL,
     )
 }
 
